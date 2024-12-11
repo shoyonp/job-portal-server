@@ -52,9 +52,17 @@ async function run() {
     });
 
     //  job application apis
+    // get all data, get one data , get some data
+    app.get("/job_applications", async (req, res) => {
+      const email = req.query.email;
+      const query = { applicant_email: email };
+      const result = await jobApplicationCollectiion.find(query).toArray();
+      res.send(result);
+    });
+
     app.post("/job-applications", async (req, res) => {
       const application = req.body;
-      const result = jobApplicationCollectiion.insertOne(application);
+      const result = await jobApplicationCollectiion.insertOne(application);
       res.send(result);
     });
   } finally {
