@@ -66,7 +66,7 @@ async function run() {
 
     //  job application apis
     // get all data, get one data , get some data
-    app.get("/job_applications", async (req, res) => {
+    app.get("/job-applications", async (req, res) => {
       const email = req.query.email;
       const query = { applicant_email: email };
       const result = await jobApplicationCollectiion.find(query).toArray();
@@ -84,6 +84,15 @@ async function run() {
         }
       }
 
+      res.send(result);
+    });
+
+    // app.get('/job_applications/:id') ==> get a specific job application by id
+
+    app.get("/job-applications/jobs/:job_id", async (req, res) => {
+      const jobId = req.params.job_id;
+      const query = { job_id: jobId };
+      const result = await jobApplicationCollectiion.find(query).toArray();
       res.send(result);
     });
 
