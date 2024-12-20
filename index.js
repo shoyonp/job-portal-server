@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+// const jwt = require("jsonwebtoken");
 const app = express();
 require("dotenv").config();
 
@@ -9,7 +10,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_pass}@cluster0.o3uzo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o3uzo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -17,7 +19,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  },
+  }
 });
 
 async function run() {
@@ -26,16 +28,21 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-    // jobs related apis
+     // jobs related apis
 
     const jobsCollection = client.db("jobPortal").collection("jobs");
-    const jobApplicationCollectiion = client
+    const jobApplicationCollection = client
       .db("jobPortal")
       .collection("job_applications");
+
+    // auth related APIS
+    // app.post("/jwt", async (req, res) => {
+    //   const user = req.body;
+    //   const token = jwt.sign(user, "secret", { expiresIn: "1h" });
+    //   res.send(token);
+    // });
 
     // jobs related apis
     app.get("/jobs", async (req, res) => {
@@ -69,7 +76,7 @@ async function run() {
     app.get("/job-applications", async (req, res) => {
       const email = req.query.email;
       const query = { applicant_email: email };
-      const result = await jobApplicationCollectiion.find(query).toArray();
+      const result = await jobApplicationCollection.find(query).toArray();
 
       //   bad way to aggergate data
       for (const application of result) {
@@ -92,13 +99,13 @@ async function run() {
     app.get("/job-applications/jobs/:job_id", async (req, res) => {
       const jobId = req.params.job_id;
       const query = { job_id: jobId };
-      const result = await jobApplicationCollectiion.find(query).toArray();
+      const result = await jobApplicationCollection.find(query).toArray();
       res.send(result);
     });
 
     app.post("/job-applications", async (req, res) => {
       const application = req.body;
-      const result = await jobApplicationCollectiion.insertOne(application);
+      const result = await jobApplicationCollection.insertOne(application);
 
       // not the best way (use aggregate)
       const id = application.job_id;
@@ -134,18 +141,21 @@ async function run() {
           status: data.status,
         },
       };
-      const result = await jobApplicationCollectiion.updateOne(
+      const result = await jobApplicationCollection.updateOne(
         filter,
         updatedDoc
       );
       res.send(result);
     });
+
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
 run().catch(console.dir);
+
 
 app.get("/", (req, res) => {
   res.send("job is falling from the sky");
