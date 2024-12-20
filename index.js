@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-// const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 const app = express();
 require("dotenv").config();
 
@@ -9,7 +10,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 app.use(cors());
 app.use(express.json());
-
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o3uzo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -19,7 +20,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -28,9 +29,11 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
 
-     // jobs related apis
+    // jobs related apis
 
     const jobsCollection = client.db("jobPortal").collection("jobs");
     const jobApplicationCollection = client
@@ -38,11 +41,18 @@ async function run() {
       .collection("job_applications");
 
     // auth related APIS
-    // app.post("/jwt", async (req, res) => {
-    //   const user = req.body;
-    //   const token = jwt.sign(user, "secret", { expiresIn: "1h" });
-    //   res.send(token);
-    // });
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+      res
+      .cookie('token',token,{
+        httpOnly:true,
+        secure:false,  // http://localhost:5173/
+
+
+      })
+      .send({success: true});
+    });
 
     // jobs related apis
     app.get("/jobs", async (req, res) => {
@@ -147,15 +157,12 @@ async function run() {
       );
       res.send(result);
     });
-
-
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
 run().catch(console.dir);
-
 
 app.get("/", (req, res) => {
   res.send("job is falling from the sky");
